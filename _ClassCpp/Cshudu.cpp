@@ -104,23 +104,29 @@ vector<tagBox*> CSHUDU::getRelBox(tagBox* b, bool _sort,bool one)
 int CSHUDU::OnlyNum()
 {
 	int total = 0;
-	while (1)
+	vector<tagBox*> vRound;
+	for (tagBox* a : _alBox)
+		if (!a->value)
+			vRound.push_back(a);
+	while (vRound.size())
 	{//遍历每一个不确定值的，尝试找出
+		vector<tagBox*> vNext;
 		int count = 0;
-		for (tagBox* a : _alBox)
+		for (tagBox* a : vRound)
 		{
-			if (a->value)
-				continue;
 			if (a->countBeable == 1)
 			{//如果可能的数字只有一个
 				int z = a->getBeable()[0];
 				upData(z, a);
 				count++;//只要有新的,就可能还有连带关系,直到找不到任何更新
 			}
+			else
+				vNext.push_back(a);
 		}
 		if (!count)
 			break;
 		total += count;
+		vRound = vNext;
 	}
 	return total;
 }

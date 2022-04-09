@@ -238,7 +238,7 @@ void Cshudu2Dlg::OnFinish()
 		{0,0,7, 0,2,0, 0,0,4},
 	};
 	/*上面方便调试初始化了9*9， 如果需要从MFC接收，执行下面函数*/
-	getInput(arry);
+	//getInput(arry);
 	int input = check(arry);
 	if (input)
 	{
