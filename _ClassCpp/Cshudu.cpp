@@ -36,7 +36,7 @@ bool tagBox::isRel(tagBox* b)
 bool CSHUDU::upData(int _value, tagBox* b)
 {
 	setBitInfo(b, _value);
-	vector<tagBox*> vRel = getRelBox(b,false,false);
+	set<tagBox*> vRel = getRelBox(b);
 	for (tagBox* t : vRel)
 		if (t->r[_value])
 		{
@@ -64,28 +64,22 @@ CSHUDU::~CSHUDU()
 }
 
 
-vector<tagBox*> CSHUDU::getRelBox(tagBox* b, bool _sort,bool one)
+set<tagBox*> CSHUDU::getRelBox(tagBox* b)
 {
 #define TEMPCODE \
-	if (ref == b || ref->value) \
+	if (ref == b || ref->value ) \
 		continue;\
-	result.push_back(ref);\
-	if(one)\
-		break;\
+	result.insert(ref);\
 
-	vector<tagBox*> result;
+	set<tagBox*> result;
 	for (int i = 0; i < 9; i++)
 	{//同一行的
 		tagBox* ref = _alBox[b->row * 9 + i];
-		if (ref->gong == b->gong)
-			continue;
 		TEMPCODE
 	}
 	for (int i = b->col; i < 81; i += 9)
 	{//同一列的
 		tagBox* ref = _alBox[i];
-		if (ref->gong == b->gong)
-			continue;
 		TEMPCODE
 	}
 	//同一个宫的
@@ -96,8 +90,36 @@ vector<tagBox*> CSHUDU::getRelBox(tagBox* b, bool _sort,bool one)
 			tagBox* ref = _alBox[index + i * 9 + j];
 			TEMPCODE
 		}
-	if (_sort)
-		sort(result.begin(), result.end(), cmp1);
+	return result;
+}
+
+set<tagBox*> CSHUDU::gusRelBox(tagBox* b)
+{
+#define TEMPCODE2 \
+	if (ref == b || ref->value || ref->caice) \
+		continue;\
+	result.insert(ref);\
+	ref->caice = true;
+
+	set<tagBox*> result;
+	for (int i = 0; i < 9; i++)
+	{//同一行的
+		tagBox* ref = _alBox[b->row * 9 + i];
+		TEMPCODE2
+	}
+	for (int i = b->col; i < 81; i += 9)
+	{//同一列的
+		tagBox* ref = _alBox[i];
+		TEMPCODE2
+	}
+	//同一个宫的
+	int index = (b->gong - 1) / 3 * 27 + b->col / 3 * 3;
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+		{
+			tagBox* ref = _alBox[index + i * 9 + j];
+			TEMPCODE2
+		}
 	return result;
 }
 
@@ -141,11 +163,10 @@ int CSHUDU::init()
 		}
 	for (tagBox* a : _alBox)
 	{
-		int val = a->value;
-		if (val)
-			upData(val, a);
+		if (!a->value)
+			continue;
+		upData(a->value, a);
 	}
-	_alUnok = _alBox;
 	return 0;
 }
 
@@ -184,7 +205,6 @@ int CSHUDU::gongAlg()
 				else
 					vUnknow.push_back(a);
 			}
-
 		for (int j = 1; j < 10; j++)
 		{//如果这个宫内已经有这个值
 			if (r[j])
@@ -224,7 +244,7 @@ bool CSHUDU::guessAlg(tagBox* p,int no)
 	if (p->value)
 		return true;
 	//找有关的子节点
-	vector<tagBox*> vRel = getRelBox(p,true,true);
+	set<tagBox*> vRel = getRelBox(p);
 	for (int i =1;i<10;i++)
 	{//逐一猜测
 		if (i==no ||  p->r[i]==false ||  !setBitInfo(p, i))
@@ -239,7 +259,7 @@ bool CSHUDU::guessAlg(tagBox* p,int no)
 			bool cur = guessAlg(b,i);
 			if (!cur)//儿子错了老子肯定也错了
 			{
-				if(_countFalse == 700000)
+				if(_countFalse == MAXFALSE)
 					return false;//如果达到最大错误上限
 				else
 					_countFalse++;
@@ -271,6 +291,14 @@ bool CSHUDU::setBitInfo(tagBox* b,int val)
 	b->value = val;
 	dbgArry_[b->row][b->col] = val;
 	return true;
+}
+
+int CSHUDU::getGid(int& row, int& col)
+{
+	//求出在第几个宫
+	int cid = col / 3 + 1;
+	int rid = row / 3 + 1;
+	return (rid - 1) * 3 + cid;
 }
 
 int CSHUDU::getBit(int arr[3], int count, int val,int& arrId, int& off)

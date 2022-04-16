@@ -5,6 +5,7 @@
 #include<map>
 #include<algorithm>
 
+#define MAXFALSE 7000000
 using namespace std;
 
 template <class T, class T1>
@@ -34,12 +35,13 @@ struct tagBox
 	{
 		return countBeable < x.countBeable;
 	}
-	bool r[10];
 	int row;
 	int col;
+	bool r[10];
 	int gong = 999;//在第几个宫
 	int countBeable = 9;
 	int value = 0;//已经确定的值
+	bool caice = false;//猜测占用
 private:
 };
 
@@ -48,8 +50,10 @@ class CSHUDU
 public:
 	CSHUDU(BYTE(*arry)[9]);
 	~CSHUDU();
-	//从参数容器中找出所有有关联的                      只1个
-	vector<tagBox*> getRelBox(tagBox* b, bool sort, bool one);
+	//从参数容器中找出所有有关联的,找相关的所有                 
+	set<tagBox*> getRelBox(tagBox* b);
+	//这个是用来猜测的会更新猜测占用值,以免后续找太多重复相关格子
+	set<tagBox*> gusRelBox(tagBox* b);
 	//找出能直接确定的,每行或者列
 	int OnlyNum();
 	//宫的检查
@@ -66,12 +70,12 @@ public:
 	bool guessAlg(tagBox* first, int no = -1);
 	//更新debug数组，标记位.
 	bool setBitInfo(tagBox* b,int val);
+	int getGid(int& row, int& col);
 	//
 	int getBit(int arr[3], int count,int val, int& arrId, int& off);
 	bool resetBit(tagBox* b);
 private:
 	vector<tagBox*> _alBox;
-	vector<tagBox*> _alUnok;
 	BYTE (*dbgArry_)[9];
 	//用一个bit来记录每行，列，宫的数字是否存在。  81个bit，10个字节，三个整型
 	int checkRow_[3];

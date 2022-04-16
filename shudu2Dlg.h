@@ -39,7 +39,7 @@ public:
 	afx_msg void OnFinish();
 	afx_msg void OnReset();
 	int isOk_;
-
+	
 	void getInput(BYTE(*arry)[9]);
 public:
 
