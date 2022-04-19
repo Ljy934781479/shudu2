@@ -95,7 +95,6 @@ set<tagBox*> CSHUDU::getRelBox(tagBox* b)
 }
 set<tagBox*> CSHUDU::gusRelBox(tagBox* b)
 {
-	int c = 0;
 	set<tagBox*> result;
 	for (tagBox* a : _alBox)
 	{
