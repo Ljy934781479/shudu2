@@ -63,7 +63,8 @@ CSHUDU::~CSHUDU()
 		delete a;
 }
 
-
+//好像不是很细致的理解清楚这里。无论什么情况找一个子节点就可以了吗？
+/*会不会出现漏掉了分支的情况？虽然子节点只找一个会快很多很多*/
 set<tagBox*> CSHUDU::getRelBox(tagBox* b)
 {
 #define TEMPCODE \
@@ -92,34 +93,16 @@ set<tagBox*> CSHUDU::getRelBox(tagBox* b)
 		}
 	return result;
 }
-
 set<tagBox*> CSHUDU::gusRelBox(tagBox* b)
 {
-#define TEMPCODE2 \
-	if (ref == b || ref->value || ref->caice) \
-		continue;\
-	result.insert(ref);\
-	ref->caice = true;
-
 	set<tagBox*> result;
-	for (int i = 0; i < 9; i++)
-	{//同一行的
-		tagBox* ref = _alBox[b->row * 9 + i];
-		TEMPCODE2
+	for (tagBox* a : _alBox)
+	{
+		if (a == b || a->value || !a->isRel(b))
+			continue;
+		result.insert(a);
+		return result;
 	}
-	for (int i = b->col; i < 81; i += 9)
-	{//同一列的
-		tagBox* ref = _alBox[i];
-		TEMPCODE2
-	}
-	//同一个宫的
-	int index = (b->gong - 1) / 3 * 27 + b->col / 3 * 3;
-	for (int i = 0; i < 3; i++)
-		for (int j = 0; j < 3; j++)
-		{
-			tagBox* ref = _alBox[index + i * 9 + j];
-			TEMPCODE2
-		}
 	return result;
 }
 
@@ -244,7 +227,7 @@ bool CSHUDU::guessAlg(tagBox* p,int no)
 	if (p->value)
 		return true;
 	//找有关的子节点
-	set<tagBox*> vRel = getRelBox(p);
+	set<tagBox*> vRel = gusRelBox(p);
 	for (int i =1;i<10;i++)
 	{//逐一猜测
 		if (i==no ||  p->r[i]==false ||  !setBitInfo(p, i))
