@@ -36,7 +36,7 @@ bool tagBox::isRel(tagBox* b)
 bool CSHUDU::upData(int _value, tagBox* b)
 {
 	setBitInfo(b, _value);
-	set<tagBox*> vRel = getRelBox(b);
+	set<tagBox*> vRel = getRelBox(b,false);
 	for (tagBox* t : vRel)
 		if (t->r[_value])
 		{
@@ -63,16 +63,16 @@ CSHUDU::~CSHUDU()
 		delete a;
 }
 
-//好像不是很细致的理解清楚这里。无论什么情况找一个子节点就可以了吗？
-/*会不会出现漏掉了分支的情况？虽然子节点只找一个会快很多很多*/
-set<tagBox*> CSHUDU::getRelBox(tagBox* b)
-{
+set<tagBox*> CSHUDU::getRelBox(tagBox* b, bool one)
+{//行列宫全要
 #define TEMPCODE \
 	if (ref == b || ref->value ) \
 		continue;\
-	result.insert(ref);\
+	res.insert(ref);\
+	if(one)\
+		break;\
 
-	set<tagBox*> result;
+	set<tagBox*> res;
 	for (int i = 0; i < 9; i++)
 	{//同一行的
 		tagBox* ref = _alBox[b->row * 9 + i];
@@ -91,18 +91,38 @@ set<tagBox*> CSHUDU::getRelBox(tagBox* b)
 			tagBox* ref = _alBox[index + i * 9 + j];
 			TEMPCODE
 		}
-	return result;
+	return res;
 }
+
+//好像不是很细致的理解清楚这里。无论什么情况找一个子节点就可以了吗？
+/*会不会出现漏掉了分支的情况？虽然子节点只找一个会快很多很多*/
 set<tagBox*> CSHUDU::gusRelBox(tagBox* b)
-{
+{//行列宫只要任意一个就行
+#define TEMPCODE2 \
+	if (ref == b || ref->value ) \
+		continue;\
+	result.insert(ref);\
+	return result;\
+
 	set<tagBox*> result;
-	for (tagBox* a : _alBox)
-	{
-		if (a == b || a->value || !a->isRel(b))
-			continue;
-		result.insert(a);
-		return result;
+	for (int i = 0; i < 9; i++)
+	{//同一行的
+		tagBox* ref = _alBox[b->row * 9 + i];
+		TEMPCODE2
 	}
+	for (int i = b->col; i < 81; i += 9)
+	{//同一列的
+		tagBox* ref = _alBox[i];
+		TEMPCODE2
+	}
+	//同一个宫的
+	int index = (b->gong - 1) / 3 * 27 + b->col / 3 * 3;
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+		{
+			tagBox* ref = _alBox[index + i * 9 + j];
+			TEMPCODE2
+		}
 	return result;
 }
 
@@ -257,26 +277,6 @@ bool CSHUDU::guessAlg(tagBox* p,int no)
 	return false;
 }
 
-bool CSHUDU::setBitInfo(tagBox* b,int val)
-{
-	//得到bit下标
-	int o1, o2, o3 = 0;
-	int i1, i2, i3 = 0;
-	int r1 = getBit(checkRow_, b->row, val,i1,o1);
-	int c1 = getBit(checkCol_, b->col, val,i2,o2);
-	int g1 = getBit(checkGong_, b->gong, val,i3,o3);
-	//检查bit位,如果不为0,设置失败
-	if (r1 || c1 || g1)
-		return false;
-	//更新bit
-	checkRow_[i1]  |= (1 << o1);
-	checkCol_[i2]  |= (1 << o2);
-	checkGong_[i3] |= (1 << o3);
-	b->value = val;
-	dbgArry_[b->row][b->col] = val;
-	return true;
-}
-
 int CSHUDU::getGid(int& row, int& col)
 {
 	//求出在第几个宫
@@ -292,6 +292,26 @@ int CSHUDU::getBit(int arr[3], int count, int val,int& arrId, int& off)
 	arrId = arrId / 32;//在第几个int.
 	off = 32 - r - 1;//偏移量
 	return arr[arrId] << r >> 31;
+}
+
+bool CSHUDU::setBitInfo(tagBox* b, int val)
+{
+	//得到bit下标
+	int o1, o2, o3 = 0;
+	int i1, i2, i3 = 0;
+	int r1 = getBit(checkRow_, b->row, val, i1, o1);
+	int c1 = getBit(checkCol_, b->col, val, i2, o2);
+	int g1 = getBit(checkGong_, b->gong, val, i3, o3);
+	//检查bit位,如果不为0,设置失败
+	if (r1 || c1 || g1)
+		return false;
+	//更新bit
+	checkRow_[i1] |= (1 << o1);
+	checkCol_[i2] |= (1 << o2);
+	checkGong_[i3] |= (1 << o3);
+	b->value = val;
+	dbgArry_[b->row][b->col] = val;
+	return true;
 }
 
 bool CSHUDU::resetBit(tagBox* b)

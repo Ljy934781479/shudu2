@@ -51,8 +51,7 @@ public:
 	CSHUDU(BYTE(*arry)[9]);
 	~CSHUDU();
 	//从参数容器中找出所有有关联的,找相关的所有                 
-	set<tagBox*> getRelBox(tagBox* b);
-	//这个是用来猜测的会更新猜测占用值,以免后续找太多重复相关格子
+	set<tagBox*> getRelBox(tagBox* b,bool one);
 	set<tagBox*> gusRelBox(tagBox* b);
 	//找出能直接确定的,每行或者列
 	int OnlyNum();
