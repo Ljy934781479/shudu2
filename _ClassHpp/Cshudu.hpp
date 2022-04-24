@@ -5,7 +5,7 @@
 #include<map>
 #include<algorithm>
 
-#define MAXFALSE 7000000
+#define MAXFALSE 70000000
 using namespace std;
 
 template <class T, class T1>
@@ -18,7 +18,7 @@ void mapToVec(T& m, T1& vec)
 //数独的每一个格子
 struct tagBox
 {
-	tagBox::tagBox(int _row, int _col, int _value);
+	tagBox::tagBox(int _row, int _col, BYTE* _p);
 	//跟另一个格子是否有关联.同行，列,宫
 	bool isRel(tagBox* b);
 	//给出可能是的数
@@ -41,7 +41,7 @@ struct tagBox
 	int gong = 999;//在第几个宫
 	int countBeable = 9;
 	int value = 0;//已经确定的值
-	bool caice = false;//猜测占用
+	BYTE* ptr_;//绑定一个地址
 private:
 };
 
@@ -50,8 +50,9 @@ class CSHUDU
 public:
 	CSHUDU(BYTE(*arry)[9]);
 	~CSHUDU();
-	//从参数容器中找出所有有关联的,找相关的所有                 
+	//从参数容器中找出所有有关联的,找相关的所有    one为真,行列宫一样要一个
 	set<tagBox*> getRelBox(tagBox* b,bool one);
+	//行列宫随便一个就行
 	set<tagBox*> gusRelBox(tagBox* b);
 	//找出能直接确定的,每行或者列
 	int OnlyNum();

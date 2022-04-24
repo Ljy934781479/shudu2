@@ -10,11 +10,12 @@ bool cmp1(tagBox* a, tagBox* b)
 	return a->countBeable < b->countBeable;
 }
 
-tagBox::tagBox(int _row, int _col, int _value)
+tagBox::tagBox(int _row, int _col, BYTE* _p)
 {
 	row = _row;
 	col = _col;
-	value = _value;
+	value = *_p;
+	ptr_ = _p;
 	//求出在第几个宫
 	int cid = col / 3 + 1;
 	int rid = row / 3 + 1;
@@ -70,6 +71,7 @@ CSHUDU::~CSHUDU()
 		delete a;
 }
 
+//这个函数和下面的函数,经过测试没有最优的选择,有时候这个快,有时候下面的快.奇了怪了,这里以后想想怎么整合
 set<tagBox*> CSHUDU::getRelBox(tagBox* b, bool one)
 {//行列宫全要
 #define TEMPCODE \
@@ -103,6 +105,8 @@ set<tagBox*> CSHUDU::getRelBox(tagBox* b, bool one)
 
 //好像不是很细致的理解清楚这里。无论什么情况找一个子节点就可以了吗？
 /*会不会出现漏掉了分支的情况？虽然子节点只找一个会快很多很多*/
+//4.25日大量测试证明不能用这个函数.确实会漏掉分支导致搜索更久
+//但还是有问题,有时候同样的输入,每次运行的时间不一样，方差很大！
 set<tagBox*> CSHUDU::gusRelBox(tagBox* b)
 {//行列宫只要任意一个就行
 #define TEMPCODE2 \
@@ -169,7 +173,7 @@ int CSHUDU::init()
 	for (int i = 0; i < 9; i++)
 		for (int j = 0; j < 9; j++)
 		{
-			tagBox* b = new tagBox(i, j, dbgArry_[i][j]);
+			tagBox* b = new tagBox(i, j, &dbgArry_[i][j]);
 			_alBox.push_back(b);
 		}
 	for (tagBox* a : _alBox)
@@ -255,7 +259,8 @@ bool CSHUDU::guessAlg(tagBox* p,int no)
 	if (p->value)
 		return true;
 	//找有关的子节点
-	set<tagBox*> vRel = gusRelBox(p);
+	set<tagBox*> vRel = getRelBox(p,true);
+	//set<tagBox*> vRel = gusRelBox(p);
 	for (int i =1;i<10;i++)
 	{//逐一猜测
 		if (i==no ||  p->r[i]==false ||  !setBitInfo(p, i))
@@ -274,8 +279,6 @@ bool CSHUDU::guessAlg(tagBox* p,int no)
 					return false;//如果达到最大错误上限
 				else
 					_countFalse++;
-				if (_countFalse == 75147)
-					int z = 0;
 				resetBit(p);
 				break;
 			}
@@ -339,7 +342,7 @@ bool CSHUDU::setBitInfo(tagBox* b, int val)
 		}
 	}
 	b->value = val;
-	dbgArry_[b->row][b->col] = val;
+	*b->ptr_ = val;
 	return true;
 }
 
@@ -369,7 +372,7 @@ bool CSHUDU::resetBit(tagBox* b)
 		}
 	}
 	b->value = 0;
-	dbgArry_[b->row][b->col] = 0;
+	*b->ptr_ = 0;
 	return false;
 }
 
