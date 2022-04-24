@@ -10,11 +10,12 @@ bool cmp1(tagBox* a, tagBox* b)
 	return a->countBeable < b->countBeable;
 }
 
-tagBox::tagBox(int _row, int _col, int _value)
+tagBox::tagBox(int _row, int _col, BYTE* _p)
 {
 	row = _row;
 	col = _col;
-	value = _value;
+	value = *_p;
+	ptr_ = _p;
 	//求出在第几个宫
 	int cid = col / 3 + 1;
 	int rid = row / 3 + 1;
@@ -70,6 +71,7 @@ CSHUDU::~CSHUDU()
 		delete a;
 }
 
+//这个函数和下面的函数,经过测试没有最优的选择,有时候这个快,有时候下面的快.奇了怪了,这里以后想想怎么整合
 set<tagBox*> CSHUDU::getRelBox(tagBox* b, bool one)
 {//行列宫全要
 #define TEMPCODE \
@@ -103,6 +105,8 @@ set<tagBox*> CSHUDU::getRelBox(tagBox* b, bool one)
 
 //好像不是很细致的理解清楚这里。无论什么情况找一个子节点就可以了吗？
 /*会不会出现漏掉了分支的情况？虽然子节点只找一个会快很多很多*/
+//4.25日大量测试证明不能用这个函数.确实会漏掉分支导致搜索更久
+//但还是有问题,有时候同样的输入,每次运行的时间不一样，方差很大！
 set<tagBox*> CSHUDU::gusRelBox(tagBox* b)
 {//行列宫只要任意一个就行
 #define TEMPCODE2 \
@@ -169,7 +173,7 @@ int CSHUDU::init()
 	for (int i = 0; i < 9; i++)
 		for (int j = 0; j < 9; j++)
 		{
-			tagBox* b = new tagBox(i, j, dbgArry_[i][j]);
+			tagBox* b = new tagBox(i, j, &dbgArry_[i][j]);
 			_alBox.push_back(b);
 		}
 	for (tagBox* a : _alBox)
@@ -247,41 +251,75 @@ int CSHUDU::parse()
 		return 999;
 	/**************************************/
 	sort(vec.begin(),vec.end(), cmp1);
-	return guessAlg(vec[0]);//递归猜测;
+	//if (vec.size() > 50)
+	//return bfs(vec[0]);//走广度
+	return dfs(vec[0]);//走深度
 }
 
-bool CSHUDU::guessAlg(tagBox* p,int no)
+bool CSHUDU::dfs(tagBox* p,int no)
 {
-	if (p->value)
-		return true;
-	//找有关的子节点
-	set<tagBox*> vRel = gusRelBox(p);
+#define DFSTEMP(s,b)\
+	for(auto it = s.begin();it!=s.end() && b==true;it++)\
+	{\
+		if ((*it)->value)\
+			continue;\
+		count++;\
+		if (dfs(*it, i))\
+			ok++;\
+		else\
+		{\
+			resetBit(p);\
+			bok = false;\
+			_countFalse++;\
+		}\
+	}\
+
+	set<tagBox*> sRow;
+	set<tagBox*> sCol;
+	getRowCell(p, sRow);
+	getColCell(p, sCol);
 	for (int i =1;i<10;i++)
 	{//逐一猜测
 		if (i==no ||  p->r[i]==false ||  !setBitInfo(p, i))
 			continue;
-		if (p->row == 1 && p->col == 1 )
-			int z = 0;
-		if (vRel.size() == 0)
-			return true;
 		int count = 0;
-		for (tagBox* b : vRel)
+		int ok = 0;
+		bool bok = true;
+		DFSTEMP(sRow,bok)
+		DFSTEMP(sCol, bok)
+		if (count == ok)
+			return true;
+	}
+	return false;
+}
+
+bool CSHUDU::bfs(tagBox* p, int no)
+{
+	set<tagBox*> sAl;
+	getAlCell(p, sAl);
+	for (int i = 1; i < 10; i++)
+	{//逐一猜测
+		if (i == no || p->r[i] == false || !setBitInfo(p, i))
+			continue;
+		int count = 0;
+		int ok = 0;
+		bool bok = true;
+		for (auto it = sAl.begin(); it != sAl.end() && bok == true; it++)
 		{
-			bool cur = guessAlg(b,i);
-			if (!cur)//儿子错了老子肯定也错了
+			if ((*it)->value)
+				continue;
+			count++;
+			if (dfs(*it, i))
+				ok++; 
+			else
 			{
-				if(_countFalse == MAXFALSE)
-					return false;//如果达到最大错误上限
-				else
-					_countFalse++;
-				if (_countFalse == 75147)
-					int z = 0;
-				resetBit(p);
-				break;
+				resetBit(p); 
+				bok = false; 
+				_countFalse++;
 			}
-			if (++count == vRel.size())
-				return true;
 		}
+		if (count == ok)
+			return true;
 	}
 	return false;
 }
@@ -339,7 +377,7 @@ bool CSHUDU::setBitInfo(tagBox* b, int val)
 		}
 	}
 	b->value = val;
-	dbgArry_[b->row][b->col] = val;
+	*b->ptr_ = val;
 	return true;
 }
 
@@ -369,7 +407,7 @@ bool CSHUDU::resetBit(tagBox* b)
 		}
 	}
 	b->value = 0;
-	dbgArry_[b->row][b->col] = 0;
+	*b->ptr_ = 0;
 	return false;
 }
 
@@ -385,4 +423,47 @@ int CSHUDU::lineCell(tagBox* a)
 			break;
 		}
 	return res;
+}
+
+void CSHUDU::getRowCell(tagBox* a, set<tagBox*>& s)
+{
+	for (int i = 0; i < 9; i++)
+	{//同一行的
+		tagBox* ref = _alBox[a->row * 9 + i];
+		if (ref == a || ref->value)
+			continue; \
+		s.insert(ref);
+	}
+}
+
+void CSHUDU::getColCell(tagBox* a, set<tagBox*>& s)
+{
+	for (int i = a->col; i < 81; i += 9)
+	{//同一列的
+		tagBox* ref = _alBox[i];
+		if (ref == a || ref->value) 
+			continue; 
+		s.insert(ref);
+	}
+}
+
+void CSHUDU::getGongCell(tagBox* a, set<tagBox*>& s)
+{
+	//同一个宫的
+	int index = (a->gong - 1) / 3 * 27 + a->col / 3 * 3;
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+		{
+			tagBox* ref = _alBox[index + i * 9 + j];
+			if (ref == a || ref->value) 
+				continue; 
+			s.insert(ref); 
+		}
+}
+
+void CSHUDU::getAlCell(tagBox* a, set<tagBox*>& s)
+{
+	getRowCell(a, s);
+	getColCell(a, s);
+	getGongCell(a, s);
 }
