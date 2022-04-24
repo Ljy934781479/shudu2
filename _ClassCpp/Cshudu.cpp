@@ -241,14 +241,11 @@ int CSHUDU::parse()
 		return 999;
 	/**************************************/
 	sort(vec.begin(),vec.end(), cmp1);
-	unknow_ = vec.size();
 	return guessAlg(vec[0]);//递归猜测;
 }
 
 bool CSHUDU::guessAlg(tagBox* p,int no)
 {
-	if (unknow_ < 8)
-		int z = 0;
 	if (p->value)
 		return true;
 	//找有关的子节点
@@ -332,7 +329,6 @@ bool CSHUDU::setBitInfo(tagBox* b, int val)
 	}
 	b->value = val;
 	dbgArry_[b->row][b->col] = val;
-	--unknow_;
 	return true;
 }
 
@@ -360,7 +356,6 @@ bool CSHUDU::resetBit(tagBox* b)
 	}
 	b->value = 0;
 	dbgArry_[b->row][b->col] = 0;
-	++unknow_;
 	return false;
 }
 

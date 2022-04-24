@@ -76,7 +76,6 @@ public:
 	int lineCell(tagBox* a);
 private:
 	vector<tagBox*> _alBox;
-	int unknow_;
 	BYTE (*dbgArry_)[9];
 	//用一个bit来记录每行，列，宫的数字是否存在。  81个bit，10个字节，三个整型
 	int checkRow_[3];
