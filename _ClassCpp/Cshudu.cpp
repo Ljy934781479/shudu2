@@ -35,7 +35,12 @@ bool tagBox::isRel(tagBox* b)
 
 bool CSHUDU::upData(int _value, tagBox* b)
 {
-	setBitInfo(b, _value);
+	bool bset = setBitInfo(b, _value);
+	if (!bset && b->countBeable == 1)
+	{
+		bCheckLine_ = false;//如果这个格子只剩下一种可能并且设置失败,表明用户的输入已经不满足对角线数独了
+		setBitInfo(b, _value);
+	}
 	set<tagBox*> vRel = getRelBox(b,false);
 	for (tagBox* t : vRel)
 		if (t->r[_value])
@@ -55,6 +60,7 @@ CSHUDU::CSHUDU(BYTE(*arry)[9])
 	memset(checkRow_, 0, 12);
 	memset(checkCol_, 0, 12);
 	memset(checkGong_, 0, 12);
+	bCheckLine_ = true;//是要要求满足对角线.
 	checkLine_ = 0;
 }
 
@@ -144,8 +150,8 @@ int CSHUDU::OnlyNum()
 			if (a->countBeable == 1)
 			{//如果可能的数字只有一个
 				int z = a->getBeable()[0];
-				upData(z, a);
-				count++;//只要有新的,就可能还有连带关系,直到找不到任何更新
+				if(upData(z, a))
+					count++;//只要有新的,就可能还有连带关系,直到找不到任何更新
 			}
 			else
 				vNext.push_back(a);
@@ -300,11 +306,13 @@ int CSHUDU::getBit(int arr[3], int count, int val,int& arrId, int& off)
 bool CSHUDU::setBitInfo(tagBox* b, int val)
 {
 	int dl = lineCell(b);
-	int z = (checkLine_ << (val - 1) >> 31);
-	if( (dl == 1 || dl==3) && (checkLine_ << (val - 1) >> 31))
-		return false;
-	if( (dl == 2 || dl == 3) && (checkLine_ << (8 + val) >> 31))
-		return false;
+	if (bCheckLine_)
+	{
+		if ((dl == 1 || dl == 3) && (checkLine_ << (val - 1) >> 31))
+			return false;
+		if ((dl == 2 || dl == 3) && (checkLine_ << (8 + val) >> 31))
+			return false;
+	}
 	//得到bit下标
 	int o1, o2, o3 = 0;
 	int i1, i2, i3 = 0;
@@ -318,14 +326,17 @@ bool CSHUDU::setBitInfo(tagBox* b, int val)
 	checkRow_[i1] |= (1 << o1);
 	checkCol_[i2] |= (1 << o2);
 	checkGong_[i3] |= (1 << o3);
-	if (dl == 1)
-		checkLine_ |= (1 << (32 - val));
-	else if (dl == 2)
-		checkLine_ |= (1 << (32 - 9 - val));
-	else if (dl == 3)
+	if (bCheckLine_)
 	{
-		checkLine_ |= (1 << (32 - val));
-		checkLine_ |= (1 << (32 - 9 - val));
+		if (dl == 1)
+			checkLine_ |= (1 << (32 - val));
+		else if (dl == 2)
+			checkLine_ |= (1 << (32 - 9 - val));
+		else if (dl == 3)
+		{
+			checkLine_ |= (1 << (32 - val));
+			checkLine_ |= (1 << (32 - 9 - val));
+		}
 	}
 	b->value = val;
 	dbgArry_[b->row][b->col] = val;
@@ -344,15 +355,18 @@ bool CSHUDU::resetBit(tagBox* b)
 	checkRow_[i1] &= ~(1 << o1);
 	checkCol_[i2] &= ~(1 << o2);
 	checkGong_[i3] &= ~(1 << o3);
-	int dl = lineCell(b);
-	if(dl==1)
-		checkLine_ &= ~(1 << (32 - v));
-	else if(dl==2)
-		checkLine_ &= ~(1 << (32 - 9-v));
-	else if (dl==3)
+	if (bCheckLine_)
 	{
-		checkLine_ &= ~(1 << (32 - v));
-		checkLine_ &= ~(1 << (32 - 9-v));
+		int dl = lineCell(b);
+		if (dl == 1)
+			checkLine_ &= ~(1 << (32 - v));
+		else if (dl == 2)
+			checkLine_ &= ~(1 << (32 - 9 - v));
+		else if (dl == 3)
+		{
+			checkLine_ &= ~(1 << (32 - v));
+			checkLine_ &= ~(1 << (32 - 9 - v));
+		}
 	}
 	b->value = 0;
 	dbgArry_[b->row][b->col] = 0;

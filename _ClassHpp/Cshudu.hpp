@@ -75,6 +75,7 @@ public:
 	bool resetBit(tagBox* b);
 	int lineCell(tagBox* a);
 private:
+	int bCheckLine_;
 	vector<tagBox*> _alBox;
 	BYTE (*dbgArry_)[9];
 	//用一个bit来记录每行，列，宫的数字是否存在。  81个bit，10个字节，三个整型
