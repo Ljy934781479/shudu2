@@ -10,12 +10,11 @@ bool cmp1(tagBox* a, tagBox* b)
 	return a->countBeable < b->countBeable;
 }
 
-tagBox::tagBox(int _row, int _col, BYTE* _p)
+tagBox::tagBox(int _row, int _col, int _value)
 {
 	row = _row;
 	col = _col;
-	value = *_p;
-	ptr_ = _p;
+	value = _value;
 	//求出在第几个宫
 	int cid = col / 3 + 1;
 	int rid = row / 3 + 1;
@@ -71,7 +70,6 @@ CSHUDU::~CSHUDU()
 		delete a;
 }
 
-//这个函数和下面的函数,经过测试没有最优的选择,有时候这个快,有时候下面的快.奇了怪了,这里以后想想怎么整合
 set<tagBox*> CSHUDU::getRelBox(tagBox* b, bool one)
 {//行列宫全要
 #define TEMPCODE \
@@ -173,7 +171,7 @@ int CSHUDU::init()
 	for (int i = 0; i < 9; i++)
 		for (int j = 0; j < 9; j++)
 		{
-			tagBox* b = new tagBox(i, j, &dbgArry_[i][j]);
+			tagBox* b = new tagBox(i, j, dbgArry_[i][j]);
 			_alBox.push_back(b);
 		}
 	for (tagBox* a : _alBox)
@@ -321,6 +319,8 @@ bool CSHUDU::bfs(tagBox* p, int no)
 		if (count == ok)
 			return true;
 	}
+		}
+	}
 	return false;
 }
 
@@ -375,7 +375,7 @@ bool CSHUDU::setBitInfo(tagBox* b, int val)
 			checkLine_ |= (1 << (32 - val));
 			checkLine_ |= (1 << (32 - 9 - val));
 		}
-	}
+	dbgArry_[b->row][b->col] = val;
 	b->value = val;
 	*b->ptr_ = val;
 	return true;
@@ -405,7 +405,7 @@ bool CSHUDU::resetBit(tagBox* b)
 			checkLine_ &= ~(1 << (32 - v));
 			checkLine_ &= ~(1 << (32 - 9 - v));
 		}
-	}
+	dbgArry_[b->row][b->col] = 0;
 	b->value = 0;
 	*b->ptr_ = 0;
 	return false;
