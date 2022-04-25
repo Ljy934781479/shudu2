@@ -42,6 +42,10 @@ struct tagBox
 	int countBeable = 9;
 	int value = 0;//已经确定的值
 	BYTE* ptr_;//绑定一个地址
+	set<tagBox*> sRchild;
+	set<tagBox*> sCchild;
+	set<tagBox*> sGchild;
+	bool isSST = false;
 private:
 };
 
@@ -50,10 +54,6 @@ class CSHUDU
 public:
 	CSHUDU(BYTE(*arry)[9]);
 	~CSHUDU();
-	//从参数容器中找出所有有关联的,找相关的所有    one为真,行列宫一样要一个
-	set<tagBox*> getRelBox(tagBox* b,bool one);
-	//行列宫随便一个就行
-	set<tagBox*> gusRelBox(tagBox* b);
 	//找出能直接确定的,每行或者列
 	int OnlyNum();
 	//宫的检查
@@ -70,6 +70,10 @@ public:
 	bool dfs(tagBox* p, int no = -1);
 	//广度优先
 	bool bfs(tagBox* p, int no = -1);
+	//创建解空间树
+	bool creatSST(vector<tagBox*>& vUnkow);
+	//猜一个格子
+	bool gusSstBox(tagBox*p);
 	//更新debug数组，标记位.
 	bool setBitInfo(tagBox* b,int val);
 	int getGid(int& row, int& col);
@@ -77,8 +81,8 @@ public:
 	int getBit(int arr[3], int count,int val, int& arrId, int& off);
 	bool resetBit(tagBox* b);
 	int lineCell(tagBox* a);
-	void getRowCell(tagBox* a,set<tagBox*>& s);
-	void getColCell(tagBox* a, set<tagBox*>& s);
+	void getRowCell(tagBox* a,set<tagBox*>& s, bool one = false);
+	void getColCell(tagBox* a, set<tagBox*>& s, bool one = false);
 	void getGongCell(tagBox* a, set<tagBox*>& s);
 	void getAlCell(tagBox* a, set<tagBox*>& s);
 private:
