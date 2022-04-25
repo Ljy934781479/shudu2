@@ -10,11 +10,12 @@ bool cmp1(tagBox* a, tagBox* b)
 	return a->countBeable < b->countBeable;
 }
 
-tagBox::tagBox(int _row, int _col, int _value)
+tagBox::tagBox(int _row, int _col, BYTE* _p)
 {
 	row = _row;
 	col = _col;
-	value = _value;
+	value = *_p;
+	ptr_ = _p;
 	//求出在第几个宫
 	int cid = col / 3 + 1;
 	int rid = row / 3 + 1;
@@ -41,8 +42,9 @@ bool CSHUDU::upData(int _value, tagBox* b)
 		bCheckLine_ = false;//如果这个格子只剩下一种可能并且设置失败,表明用户的输入已经不满足对角线数独了
 		setBitInfo(b, _value);
 	}
-	set<tagBox*> vRel = getRelBox(b,false);
-	for (tagBox* t : vRel)
+	set<tagBox*> s;
+	getAlCell(b,s);
+	for (tagBox* t : s)
 		if (t->r[_value])
 		{
 			t->countBeable -= 1;
@@ -68,71 +70,6 @@ CSHUDU::~CSHUDU()
 {
 	for (tagBox* a : _alBox)
 		delete a;
-}
-
-set<tagBox*> CSHUDU::getRelBox(tagBox* b, bool one)
-{//行列宫全要
-#define TEMPCODE \
-	if (ref == b || ref->value ) \
-		continue;\
-	res.insert(ref);\
-	if(one)\
-		break;\
-
-	set<tagBox*> res;
-	for (int i = 0; i < 9; i++)
-	{//同一行的
-		tagBox* ref = _alBox[b->row * 9 + i];
-		TEMPCODE
-	}
-	for (int i = b->col; i < 81; i += 9)
-	{//同一列的
-		tagBox* ref = _alBox[i];
-		TEMPCODE
-	}
-	//同一个宫的
-	int index = (b->gong - 1) / 3 * 27 + b->col / 3 * 3;
-	for (int i = 0; i < 3; i++)
-		for (int j = 0; j < 3; j++)
-		{
-			tagBox* ref = _alBox[index + i * 9 + j];
-			TEMPCODE
-		}
-	return res;
-}
-
-//好像不是很细致的理解清楚这里。无论什么情况找一个子节点就可以了吗？
-/*会不会出现漏掉了分支的情况？虽然子节点只找一个会快很多很多*/
-//4.25日大量测试证明不能用这个函数.确实会漏掉分支导致搜索更久
-//但还是有问题,有时候同样的输入,每次运行的时间不一样，方差很大！
-set<tagBox*> CSHUDU::gusRelBox(tagBox* b)
-{//行列宫只要任意一个就行
-#define TEMPCODE2 \
-	if (ref == b || ref->value ) \
-		continue;\
-	result.insert(ref);\
-	return result;\
-
-	set<tagBox*> result;
-	for (int i = 0; i < 9; i++)
-	{//同一行的
-		tagBox* ref = _alBox[b->row * 9 + i];
-		TEMPCODE2
-	}
-	for (int i = b->col; i < 81; i += 9)
-	{//同一列的
-		tagBox* ref = _alBox[i];
-		TEMPCODE2
-	}
-	//同一个宫的
-	int index = (b->gong - 1) / 3 * 27 + b->col / 3 * 3;
-	for (int i = 0; i < 3; i++)
-		for (int j = 0; j < 3; j++)
-		{
-			tagBox* ref = _alBox[index + i * 9 + j];
-			TEMPCODE2
-		}
-	return result;
 }
 
 //---4420
@@ -171,7 +108,7 @@ int CSHUDU::init()
 	for (int i = 0; i < 9; i++)
 		for (int j = 0; j < 9; j++)
 		{
-			tagBox* b = new tagBox(i, j, dbgArry_[i][j]);
+			tagBox* b = new tagBox(i, j, &dbgArry_[i][j]);
 			_alBox.push_back(b);
 		}
 	for (tagBox* a : _alBox)
@@ -249,8 +186,6 @@ int CSHUDU::parse()
 		return 999;
 	/**************************************/
 	sort(vec.begin(),vec.end(), cmp1);
-	//if (vec.size() > 50)
-	//return bfs(vec[0]);//走广度
 	return dfs(vec[0]);//走深度
 }
 
@@ -319,8 +254,6 @@ bool CSHUDU::bfs(tagBox* p, int no)
 		if (count == ok)
 			return true;
 	}
-		}
-	}
 	return false;
 }
 
@@ -375,7 +308,7 @@ bool CSHUDU::setBitInfo(tagBox* b, int val)
 			checkLine_ |= (1 << (32 - val));
 			checkLine_ |= (1 << (32 - 9 - val));
 		}
-	dbgArry_[b->row][b->col] = val;
+	}
 	b->value = val;
 	*b->ptr_ = val;
 	return true;
@@ -405,7 +338,7 @@ bool CSHUDU::resetBit(tagBox* b)
 			checkLine_ &= ~(1 << (32 - v));
 			checkLine_ &= ~(1 << (32 - 9 - v));
 		}
-	dbgArry_[b->row][b->col] = 0;
+	}
 	b->value = 0;
 	*b->ptr_ = 0;
 	return false;

@@ -50,10 +50,6 @@ class CSHUDU
 public:
 	CSHUDU(BYTE(*arry)[9]);
 	~CSHUDU();
-	//从参数容器中找出所有有关联的,找相关的所有    one为真,行列宫一样要一个
-	set<tagBox*> getRelBox(tagBox* b,bool one);
-	//行列宫随便一个就行
-	set<tagBox*> gusRelBox(tagBox* b);
 	//找出能直接确定的,每行或者列
 	int OnlyNum();
 	//宫的检查
