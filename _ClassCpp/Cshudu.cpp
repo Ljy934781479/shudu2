@@ -72,6 +72,7 @@ CSHUDU::~CSHUDU()
 		delete a;
 }
 
+
 //---4420
 int CSHUDU::OnlyNum()
 {
@@ -427,7 +428,7 @@ void CSHUDU::getColCell(tagBox* a, set<tagBox*>& s, bool one)
 	}
 }
 
-void CSHUDU::getGongCell(tagBox* a, set<tagBox*>& s)
+void CSHUDU::getGongCell(tagBox* a, set<tagBox*>& s, bool second)
 {
 	//同一个宫的
 	int index = (a->gong - 1) / 3 * 27 + a->col / 3 * 3;
@@ -435,15 +436,15 @@ void CSHUDU::getGongCell(tagBox* a, set<tagBox*>& s)
 		for (int j = 0; j < 3; j++)
 		{
 			tagBox* ref = _alBox[index + i * 9 + j];
-			if (ref == a || ref->value) 
-				continue; 
-			s.insert(ref); 
+			if (ref == a || ref->value)
+				continue;
+			s.insert(ref);
 		}
 }
 
-void CSHUDU::getAlCell(tagBox* a, set<tagBox*>& s)
+void CSHUDU::getAlCell(tagBox* a, set<tagBox*>& s, bool second)
 {
-	getRowCell(a, s);
-	getColCell(a, s);
-	getGongCell(a, s);
+	getRowCell(a, s, second);
+	getColCell(a, s, second);
+	getGongCell(a, s, second);
 }

@@ -81,10 +81,10 @@ public:
 	int getBit(int arr[3], int count,int val, int& arrId, int& off);
 	bool resetBit(tagBox* b);
 	int lineCell(tagBox* a);
-	void getRowCell(tagBox* a,set<tagBox*>& s, bool one = false);
-	void getColCell(tagBox* a, set<tagBox*>& s, bool one = false);
-	void getGongCell(tagBox* a, set<tagBox*>& s);
-	void getAlCell(tagBox* a, set<tagBox*>& s);
+	void getRowCell(tagBox* a, set<tagBox*>& s, bool second = false);
+	void getColCell(tagBox* a, set<tagBox*>& s, bool second = false);
+	void getGongCell(tagBox* a, set<tagBox*>& s, bool second = false);
+	void getAlCell(tagBox* a, set<tagBox*>& s, bool second = false);
 private:
 	int bCheckLine_;
 	vector<tagBox*> _alBox;
