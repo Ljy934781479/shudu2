@@ -42,10 +42,8 @@ struct tagBox
 	int countBeable = 9;
 	int value = 0;//已经确定的值
 	BYTE* ptr_;//绑定一个地址
-	set<tagBox*> sRchild;
-	set<tagBox*> sCchild;
-	set<tagBox*> sGchild;
-	bool isSST = false;
+	tagBox* rowChild = NULL;
+	tagBox* colChild = NULL;
 private:
 };
 

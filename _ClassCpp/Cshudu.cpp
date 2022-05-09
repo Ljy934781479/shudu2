@@ -192,22 +192,6 @@ int CSHUDU::parse()
 
 bool CSHUDU::dfs(tagBox* p,int no)
 {
-#define DFSTEMP(s,b)\
-	for(auto it = s.begin();it!=s.end() && b==true;it++)\
-	{\
-		if ((*it)->value)\
-			continue;\
-		count++;\
-		if (dfs(*it, i))\
-			ok++;\
-		else\
-		{\
-			resetBit(p);\
-			bok = false;\
-			_countFalse++;\
-		}\
-	}\
-
 	set<tagBox*> sRow;
 	set<tagBox*> sCol;
 	getRowCell(p, sRow,true);
@@ -219,8 +203,26 @@ bool CSHUDU::dfs(tagBox* p,int no)
 		int count = 0;
 		int ok = 0;
 		bool bok = true;
-		DFSTEMP(sRow,bok)
-		DFSTEMP(sCol, bok)
+
+		auto iuuu = [&](set<tagBox*>& s) 
+		{
+			for (auto it = s.begin(); it != s.end() && bok == true; it++)
+			{
+				if ((*it)->value)
+					continue;
+				count++;
+				if (dfs(*it, i))
+					ok++;
+				else
+				{
+					resetBit(p);
+					bok = false;
+					_countFalse++;
+				}
+			}
+		};
+		iuuu(sRow);
+		iuuu(sCol);
 		if (count == ok)
 			return true;
 	}
@@ -262,31 +264,17 @@ bool CSHUDU::creatSST(vector<tagBox*>& vUnkow)
 {//这个函数n平方好像不可避免了
 	if (!vUnkow.size())
 		return false;
-	vector<tagBox*> vRes;
-	vector<tagBox*> vTemp = vUnkow;
-	tagBox* f = vTemp[0];
-	vRes.push_back(f);
-	while (1)
+	set<tagBox*> sr;
+	set<tagBox*> sc;
+	for (tagBox* b : vUnkow)
 	{
-		vector<tagBox*> vNext;
-		for (tagBox* b : vTemp)
-		{
-			if (b == f)
-				continue;
-			if (f->row == b->row)
-				f->sRchild.insert(b);
-			else if (f->col == b->col)
-				f->sCchild.insert(b);
-			else
-				vNext.push_back(b);
-		}
-		if (vNext.size() == 0)
-			break;
-		vTemp = vNext;
-		f = vTemp[0];
-		vRes.push_back(f);
+		getRowCell(b, sr,true);
+		getColCell(b, sc, true);
+		if (sr.size()) b->rowChild = *sr.begin();
+		if (sc.size()) b->colChild = *sc.begin();
+		sr.clear();
+		sc.clear();
 	}
-	vUnkow = vRes;
 	return true;
 }
 
