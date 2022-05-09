@@ -271,14 +271,7 @@ bool CSHUDU::creatSST(vector<tagBox*>& vUnkow)
 		vector<tagBox*> vNext;
 		for (tagBox* b : vTemp)
 		{
-			if (b == f)
-				continue;
-			if (f->row == b->row)
-				f->sRchild.insert(b);
-			else if (f->col == b->col)
-				f->sCchild.insert(b);
-			else
-				vNext.push_back(b);
+
 		}
 		if (vNext.size() == 0)
 			break;
