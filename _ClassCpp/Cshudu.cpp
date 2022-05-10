@@ -261,7 +261,7 @@ bool CSHUDU::bfs(tagBox* p, int no)
 }
 
 bool CSHUDU::creatSST(vector<tagBox*>& vUnkow)
-{//这个函数n平方好像不可避免了
+{
 	if (!vUnkow.size())
 		return false;
 	set<tagBox*> sr;
